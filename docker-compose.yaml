@@ -1,0 +1,85 @@
+version: '3'
+services:
+  redis:
+    image: redis:7.4.1
+    container_name: redis
+    ports:
+      - '6379:6379'
+    networks:
+      - task-manager-network
+
+  rabbitmq:
+    image: 'rabbitmq:4-management'
+    container_name: rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    networks:
+      - task-manager-network
+  
+  mongo:
+    image: mongo:8
+    container_name: mongo
+    ports:
+      - '27017:27017'
+    networks:
+      - task-manager-network
+    volumes:
+      - mongo-data:/data/db
+
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    ports:
+      - '4001:4001'
+    networks:
+      - task-manager-network
+    depends_on:
+      mongo: 
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    environment:
+      - MONGO_URL=mongodb://mongo/auth-service
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+  task-service:
+    build: ./task-service
+    container_name: task-service
+    ports:
+      - '4002:4002'
+    networks:
+      - task-manager-network
+    depends_on:
+      mongo: 
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    environment:
+      - MONGO_URL=mongodb://mongo/task-service
+      - AUTH_API=http://auth-service:4001
+      - TASK_SERVICE_API=http://task-service:4002
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+  task-executor:
+    build: ./task-executor
+    container_name: task-executor
+    networks:
+      - task-manager-network
+    depends_on:
+      mongo: 
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    environment:
+      - AUTH_API=http://auth-service:4001
+      - TASK_SERVICE_API=http://task-service:4002
+
+networks:
+  task-manager-network:
+    driver: bridge
+
+volumes:
+  mongo-data:

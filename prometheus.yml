@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'auth-service'
+    basic_auth:
+      username: prometheus
+      password: c416ef61501af8cf542d6aa4526d2020f3c59e91cbf6e3ae83554769d756dba0
+    static_configs:
+      - targets: ['auth-service:4001']
+
+  - job_name: 'task-service'
+    basic_auth:
+      username: prometheus
+      password: c416ef61501af8cf542d6aa4526d2020f3c59e91cbf6e3ae83554769d756dba0
+    static_configs:
+      - targets: ['task-service:4002']
