@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require('../utils/db');
 const { Schema, model } = mongoose;
 
 const taskSchema = new Schema({

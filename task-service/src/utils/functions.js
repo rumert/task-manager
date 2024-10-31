@@ -1,27 +1,5 @@
-const { default: mongoose } = require("mongoose");
 const amqp = require('amqplib');
 const redisClient = require("./redisClient");
-
-async function connectWithRetry(connectFunc, retries = 5, delay = 2000) {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const connection = await connectFunc();
-      console.log('Connection successful');
-      return connection;
-    } catch (error) {
-      console.error(`Connection failed. Attempt ${i + 1} of ${retries}:`, error.message);
-      await new Promise(res => setTimeout(res, delay));
-    }
-  }
-  console.error('Max retries reached. Exiting...');
-  process.exit(1);
-}
-  
-async function connectToMongoDB() {
-  return await connectWithRetry(async () => {
-    return await mongoose.connect(process.env.MONGO_URL);
-  });
-}
 
 async function sendTaskToQueue (queue, task) {
   const connection = await amqp.connect('amqp://rabbitmq');
@@ -61,7 +39,6 @@ async function invalidateCaches(pattern) {
 }
 
 module.exports = {
-  connectToMongoDB,
   sendTaskToQueue,
   asyncWrapper,
   getDataWithCache,
